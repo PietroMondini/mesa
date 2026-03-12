@@ -72,12 +72,12 @@ class Sheep(Animal):
 
     def move(self):
         """Move towards a cell where there isn't a wolf, and preferably with grown grass."""
-        neighbors = np.array(list(self.cell.neighborhood))
+        neighbors = self.cell.neighborhood
         coords = np.array([cell.coordinate for cell in neighbors])
         xs, ys = coords[:, 0], coords[:, 1]
 
-        has_wolf = np.asarray(self.model.grid.wolves.data)[xs, ys].astype(bool)
-        has_grass = np.asarray(self.model.grid.grass.data)[xs, ys].astype(bool)
+        has_wolf = self.model.grid.wolves[xs, ys].astype(bool)
+        has_grass = self.model.grid.grass[xs, ys].astype(bool)
 
         safe_cells = ~has_wolf
         safe_grass_cells = safe_cells & has_grass
@@ -88,7 +88,8 @@ class Sheep(Animal):
 
         # Move to a cell with grass if available, otherwise move to any safe cell
         target_mask = safe_grass_cells if safe_grass_cells.any() else safe_cells
-        self.cell = self.random.choice(neighbors[target_mask])
+        valid_cells = [cell for cell, valid in zip(neighbors, target_mask) if valid]
+        self.cell = self.random.choice(valid_cells)
 
 
 class Wolf(Animal):
@@ -123,6 +124,9 @@ class Wolf(Animal):
         # Mark the cell as occupied by a wolf
         self.model.grid.wolves.data[self.cell.coordinate] = True
 
+    def remove(self):
+        self.model.grid.wolves.data[self.cell.coordinate] = False
+        super().remove()
 
 class GrassPatch(FixedAgent):
     """A patch of grass that grows at a fixed rate and can be eaten by sheep."""

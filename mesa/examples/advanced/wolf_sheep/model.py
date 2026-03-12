@@ -11,8 +11,6 @@ Replication of the model found in NetLogo:
 
 import math
 
-import numpy as np
-
 from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.discrete_space import OrthogonalVonNeumannGrid
@@ -91,7 +89,7 @@ class WolfSheep(Model):
             "Sheep": lambda m: len(m.agents_by_type[Sheep]),
         }
         if self.grass:
-            model_reporters["Grass"] = lambda m: int(np.sum(m.grass_layer.data))
+            model_reporters["Grass"] = lambda m: int(m.grid.grass.sum())
 
         self.datacollector = DataCollector(model_reporters)
 
