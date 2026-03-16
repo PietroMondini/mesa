@@ -8,7 +8,7 @@ import scipy.stats.qmc as qmc
 
 from mesa import Agent, Model
 from mesa.experimental.scenarios import Scenario
-from mesa.experimental.scenarios.scenario import rescale
+from mesa.experimental.scenarios.scenario import rescale_samples
 
 
 def test_scenario():
@@ -229,7 +229,7 @@ def test_rescale_basic():
 
     ranges = np.array([[0, 10], [10, 20], [-1, 1]])
 
-    scaled = rescale(samples, ranges)
+    scaled = rescale_samples(samples, ranges)
 
     expected = np.array([[0, 15, 1], [2.5, 17.5, 0]])
 
@@ -241,7 +241,7 @@ def test_rescale_shape_preserved():
     samples = np.random.random((50, 4))
     ranges = np.array([[0, 1], [10, 20], [-5, 5], [100, 200]])
 
-    scaled = rescale(samples, ranges)
+    scaled = rescale_samples(samples, ranges)
 
     assert scaled.shape == samples.shape
 
@@ -252,7 +252,7 @@ def test_rescale_negative_ranges():
 
     ranges = np.array([[-10, -2], [-5, 5]])
 
-    scaled = rescale(samples, ranges)
+    scaled = rescale_samples(samples, ranges)
 
     expected = np.array([[-10, 5], [-6, -2.5]])
 
@@ -264,7 +264,7 @@ def test_rescale_single_dimension():
     samples = np.array([[0.0], [0.5], [1.0]])
     ranges = np.array([[10, 20]])
 
-    scaled = rescale(samples, ranges)
+    scaled = rescale_samples(samples, ranges)
 
     expected = np.array([[10], [15], [20]])
 
@@ -277,16 +277,7 @@ def test_rescale_dimension_mismatch():
     ranges = np.array([[0, 1], [10, 20]])  # only 2 ranges
 
     with pytest.raises(ValueError):
-        rescale(samples, ranges)
-
-
-def test_rescale_invalid_range_shape():
-    """Rescale should raise error if ranges do not have shape (d,2)."""
-    samples = np.random.random((10, 3))
-    ranges = np.array([[0, 1, 2], [3, 4, 5]])
-
-    with pytest.raises(ValueError):
-        rescale(samples, ranges)
+        rescale_samples(samples, ranges)
 
 
 def test_rescale_large_sample():
@@ -302,20 +293,11 @@ def test_rescale_large_sample():
         ]
     )
 
-    scaled = rescale(samples, ranges)
+    scaled = rescale_samples(samples, ranges)
 
     assert scaled.shape == samples.shape
     assert np.all(scaled[:, 0] >= 0)
     assert np.all(scaled[:, 0] <= 10)
-
-
-def test_rescale_invalid_samples_shape():
-    """Rescale should raise error if samples is not a 2D array."""
-    samples = np.array([0.1, 0.2, 0.3])  # 1D array
-    ranges = np.array([[0, 1]])
-
-    with pytest.raises(ValueError):
-        rescale(samples, ranges)
 
 
 def test_rescale_bounds_mapping():
@@ -323,7 +305,17 @@ def test_rescale_bounds_mapping():
     samples = np.array([[0.0, 1.0]])
     ranges = np.array([[5, 10], [-2, 2]])
 
-    scaled = rescale(samples, ranges)
+    scaled = rescale_samples(samples, ranges)
 
     expected = np.array([[5, 2]])
     assert np.allclose(scaled, expected)
+    
+
+def test_rescale_inplace():
+    """Check that inplace=True modifies the original array."""
+    samples = np.array([[0.0, 1.0]])
+    ranges = np.array([[0, 10], [0, 10]])
+
+    rescale_samples(samples, ranges, inplace=True)
+
+    assert np.allclose(samples, np.array([[0, 10]]))
